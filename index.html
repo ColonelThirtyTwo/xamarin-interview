@@ -40,6 +40,22 @@
 		.attr("transform", "translate("+margin.left+","+margin.top+")")
 	;*/
 	
+	// Clears the graph, then fetches each actor's age and displays them in the graph.
+	function reloadGraph(actors) {
+		actors.forEach(function(actor, i) {
+			actor = actor.replace(" ", "_");
+			
+			/* Go through corsproxy to step around cross-site request restrictions */
+			$.get("http://www.corsproxy.com/en.wikipedia.org/wiki/"+actor, function(data) {
+				data = $(data);
+				
+				var match = data.find("table.infobox th:contains('Born') + td .ForceAgeToShow").text()
+					.match(/\(age\s*(\d+)\)/i);
+				console.log(actor, match && parseInt(match[1]));
+			}, "html");
+		});
+	}
+	
 	// Movie Selector
 	$("#movie-searcher input").select2({
 		placeholder: "Select a movie",
@@ -83,14 +99,14 @@
 	});
 	
 	$("#movie-searcher input").on("select2-selecting", function(e) {
-		console.log("searching", e);
 		$("#loading-icon").show(100);
 		$.getJSON("http://www.omdbapi.com/", {t: e.val}, function(data) {
+			$("#loading-icon").hide(100);
+			
 			var actors = data.Actors;
 			actors = actors.split(/, */);
 			
-			console.log(actors);
-			$("#loading-icon").hide(100);
+			reloadGraph(actors);
 		});
 	});
 })();	
