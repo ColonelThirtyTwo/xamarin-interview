@@ -4,7 +4,7 @@
 <head>
 	<meta charset="UTF-8">
 	
-	<title>Biome Map</title>
+	<title>Average Age of Actors in a Movie</title>
 	
 	<link rel="stylesheet" type="text/css" href="./style.css">
 	<link rel="stylesheet" type="text/css" href="./select2.css">
@@ -19,17 +19,29 @@
 	<h1>This app requires Javascript!</h1>
 </noscript>
 
-<div>
-	<input type="text" id="movie-searcher">
+<div id="movie-searcher">
+	<input type="text">
 </div>
 
-<svg>
-</svg>
+<div id="svg-canvas">
+	<img id="loading-icon" src="./ajax-loader.gif" width="48" height="48" style="display: none;">
+	<svg>
+	</svg>
+</div>
 
 <script type="text/javascript">
+(function() {
+	/*var margin = {top: 20, right: 40, bottom: 30, left: 20},
+	    width = 800 - margin.left - margin.right,
+	    height = 600 - margin.top - margin.bottom;
+	
+	
+	var svg = d3.select("svg").append("g")
+		.attr("transform", "translate("+margin.left+","+margin.top+")")
+	;*/
 	
 	// Movie Selector
-	$("#movie-searcher").select2({
+	$("#movie-searcher input").select2({
 		placeholder: "Select a movie",
 		minimumInputLength: 4,
 		width: "100%",
@@ -44,6 +56,9 @@
 				};
 			},
 			results: function(data, page) {
+				if(!("Search" in data))
+					return {results: [], more: false};
+				
 				// OMDB likes to duplicate titles, so filter those out.
 				var added = d3.set();
 				var results = [];
@@ -67,10 +82,18 @@
 		}
 	});
 	
-	$("#movie-searcher").on("select2-selecting", function(e) {
-		console.log(e);
+	$("#movie-searcher input").on("select2-selecting", function(e) {
+		console.log("searching", e);
+		$("#loading-icon").show(100);
+		$.getJSON("http://www.omdbapi.com/", {t: e.val}, function(data) {
+			var actors = data.Actors;
+			actors = actors.split(/, */);
+			
+			console.log(actors);
+			$("#loading-icon").hide(100);
+		});
 	});
-	
+})();	
 </script>
 
 </body>
