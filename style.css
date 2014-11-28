@@ -19,6 +19,8 @@ svg {
 
 .bar {
 	fill: grey;
+	
+	transition: fill 0.75s;
 }
 .bar.fetched {
 	fill: steelblue;

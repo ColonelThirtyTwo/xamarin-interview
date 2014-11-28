@@ -92,8 +92,8 @@
 			.domain(actorData.map(function(d) { return d.name; }))
 			.rangeRoundBands([0, width], 0.2);
 		var yScale = d3.scale.linear()
-			.domain([minAge -2, maxAge])
-			.range([height, 0])
+			.domain([minAge-3, maxAge])
+			.range([height-30, 0])
 			.clamp(true);
 		
 		// Axis
@@ -109,25 +109,38 @@
 		
 		// Bars
 		var s_bar = svg.selectAll("g.bar").data(actorData, function(v) { return v.name; });
-		var s_bar_g = s_bar.enter().append("g")
-			.classed("bar", true);
-		s_bar_g.append("rect")
-			.attr("width", xScale.rangeBand());
-		s_bar_g.append("text")
+		var s_bar_g = s_bar.enter().append("g") // Group
+			.classed("bar", true)
+			.attr("transform", function(d, i) {
+				return "translate(" + xScale(d.name) + "," + yScale(d.age || minAge-3) + ")"
+			});;
+		s_bar_g.append("rect") // Rectangle
+			.attr("width", xScale.rangeBand())
+			.attr("height", function(d) { return height - yScale(d.age || minAge-3); });
+		s_bar_g.append("text") // Age text
 			.attr("x", xScale.rangeBand() / 2.0)
 			.attr("y", 20)
 			.attr("text-anchor", "middle");
 		
-		s_bar
+		s_bar // Update classes
 			.classed("fetched", function(d) { return d.fetched; })
-			.classed("failed", function(d) { return d.failed; })
-			.attr("transform", function(d, i) {
-				return "translate(" + xScale(d.name) + "," + yScale(d.age || 0) + ")"
+			.classed("failed", function(d) { return d.failed; });
+		s_bar.select("text") // Update text
+			.text(function(d) {
+				if(!d.fetched)
+					return "...";
+				if(d.failed)
+					return "No Data";
+				return d.age;
 			});
-		s_bar.select("rect")
-			.attr("height", function(d) { return height - yScale(d.age || 0); });
-		s_bar.select("text")
-			.text(function(d) { return d.age || "..."; });
+		
+		s_bar.transition() // Animated properties
+			.duration(750)
+			.attr("transform", function(d, i) {
+				return "translate(" + xScale(d.name) + "," + yScale(d.age || minAge-3) + ")"
+			})
+			.select("rect")
+			.attr("height", function(d) { return height - yScale(d.age || minAge-3); });
 		
 		s_bar.exit().remove();
 		
@@ -175,6 +188,12 @@
 				},
 				
 				success: function(data) {
+					if("error" in data) {
+						actor.fetched = true;
+						actor.failed = true;
+						return;
+					}
+					
 					// Convert to HTML fragment and scrape age
 					var htmlStr = data.parse.text["*"];
 					
@@ -196,6 +215,11 @@
 						actor.failed = true;
 					
 					redrawGraph();
+				},
+				
+				error: function() {
+					actor.fetched = true;
+					actor.failed = true;
 				},
 			});
 		});
