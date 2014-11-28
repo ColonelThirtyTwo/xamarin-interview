@@ -26,12 +26,9 @@ svg {
 	fill: steelblue;
 }
 .bar.failed {
-	fill: pink;
+	fill: firebrick;
 }
 .bar text {
-	fill: black;
-}
-.bar.fetched text {
 	fill: white;
 }
 
