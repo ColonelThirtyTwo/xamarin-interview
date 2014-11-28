@@ -96,10 +96,14 @@
 		
 		// Bars
 		var s_bar = svg.selectAll("g.bar").data(actorData, function(v) { return v.name; });
-		s_bar.enter().append("g")
-			.classed("bar", true)
-			.append("rect")
-				.attr("width", xScale.rangeBand());
+		var s_bar_g = s_bar.enter().append("g")
+			.classed("bar", true);
+		s_bar_g.append("rect")
+			.attr("width", xScale.rangeBand());
+		s_bar_g.append("text")
+			.attr("x", xScale.rangeBand() / 2.0)
+			.attr("y", 20)
+			.attr("text-anchor", "middle");
 		
 		s_bar
 			.classed("fetched", function(d) { return d.fetched; })
@@ -109,6 +113,8 @@
 			});
 		s_bar.select("rect")
 			.attr("height", function(d) { return height - yScale(d.age || 0); });
+		s_bar.select("text")
+			.text(function(d) { return d.age || "..."; });
 		
 		s_bar.exit().remove();
 		

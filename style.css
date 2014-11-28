@@ -42,6 +42,12 @@ svg {
 .bar.failed {
 	fill: pink;
 }
+.bar text {
+	fill: black;
+}
+.bar.fetched text {
+	fill: white;
+}
 
 .axis path,
 .axis line {
