@@ -23,16 +23,15 @@
 	<input type="text">
 </div>
 
-<div id="svg-canvas">
-	<img id="loading-icon" src="./ajax-loader.gif" width="48" height="48" style="display: none;">
-	<svg>
-	</svg>
-</div>
+<svg>
+</svg>
 
 <script type="text/javascript">
 "use strict";
 
 (function() {
+	var TOMATOES_API_KEY = "zkj3h538jh6k2kuuhmq7wsy5";
+	
 	// Some SVG settings
 	var margin = {top: 20, right: 80, bottom: 30, left: 40},
 	    width = 800 - margin.left - margin.right,
@@ -59,7 +58,8 @@
 	svg.append("text")
 		.attr("x", width+5)
 		.attr("y", 0)
-		.text("Mean");
+		.text("Mean")
+		.style("display", "none");
 	svg.append("g")
 		.classed("axis x", true)
 		.attr("transform", "translate(0,"+height+")");
@@ -79,7 +79,7 @@
 			.domain(actorData.map(function(d) { return d.name; }))
 			.rangeRoundBands([0, width], 0.2);
 		var yScale = d3.scale.linear()
-			.domain([minAge - 1, maxAge])
+			.domain([minAge -2, maxAge])
 			.range([height, 0])
 			.clamp(true);
 		
@@ -148,8 +148,8 @@
 			// Get each actor's age
 			$.ajax({
 				url: "http://en.wikipedia.org/w/api.php",
-				jsonp: "callback",
 				dataType: "jsonp",
+				jsonp: "callback",
 				cache: true,
 				data: {
 					format: "json",
@@ -172,8 +172,6 @@
 						.match(/\(age\s*(\d+)\)/i);
 					var age = match && parseInt(match[1]);
 					
-					console.log(actorName, age);
-					
 					// Update actor and graph.
 					actor.fetched = true;
 					if(age)
@@ -195,36 +193,24 @@
 		minimumInputLength: 4,
 		width: "100%",
 		ajax: {
-			url: "http://www.omdbapi.com/",
-			dataType: "json",
+			url: "http://api.rottentomatoes.com/api/public/v1.0/movies.json",
+			dataType: "jsonp",
+			jsonp: "callback",
 			quietMillis: 250,
 			cache: true,
 			data: function(term, page) {
 				return {
-					s: term,
+					apikey: TOMATOES_API_KEY,
+					q: term,
 				};
 			},
 			results: function(data, page) {
-				if(!("Search" in data))
-					return {results: [], more: false};
-				
-				// OMDB likes to duplicate titles, so filter those out.
-				var added = d3.set();
-				var results = [];
-				
-				for(var i=0; i<data.Search.length; i++) {
-					var entry = data.Search[i];
-					if(!added.has(entry.Title)) {
-						added.add(entry.Title);
-						results.push({
-							id: entry.Title,
-							text: entry.Title + " ("+entry.Year+")",
-						});
-					}
-				}
+				data.movies.forEach(function(d) {
+					d.text = d.title + " (" + d.year + ")";
+				});
 				
 				return {
-					results: results,
+					results: data.movies,
 					more: false,
 				};
 			},
@@ -232,15 +218,8 @@
 	});
 	
 	$("#movie-searcher input").on("select2-selecting", function(e) {
-		$("#loading-icon").show(100);
-		$.getJSON("http://www.omdbapi.com/", {t: e.val}, function(data) {
-			$("#loading-icon").hide(100);
-			
-			var actors = data.Actors;
-			actors = actors.split(/, */);
-			
-			reloadGraph(actors);
-		});
+		var actors = e.choice.abridged_cast.map(function(d) { return d.name; });
+		reloadGraph(actors);
 	});
 })();	
 </script>

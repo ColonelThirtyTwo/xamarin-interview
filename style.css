@@ -17,22 +17,6 @@ svg {
 	margin-bottom: 20px;
 }
 
-#svg-canvas {
-	/*
-	Make the loading icon position relative to this element, on top of the SVG,
-	but not taking up any space.
-	
-	See http://stackoverflow.com/a/105035/646619 
-	*/
-	position: relative;
-}
-
-#loading-icon {
-	position: absolute;
-	top: 276px; /* Center over SVG */
-	left: 376px;
-}
-
 .bar {
 	fill: grey;
 }
