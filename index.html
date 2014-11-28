@@ -34,7 +34,7 @@
 
 (function() {
 	// Some SVG settings
-	var margin = {top: 20, right: 20, bottom: 30, left: 40},
+	var margin = {top: 20, right: 80, bottom: 30, left: 40},
 	    width = 800 - margin.left - margin.right,
 	    height = 600 - margin.top - margin.bottom;
 	
@@ -43,6 +43,23 @@
 		.attr("transform", "translate("+margin.left+","+margin.top+")")
 	;
 	
+	// Set up some elements
+	svg.append("g")
+		.classed("avg", true)
+		.style("display", "none");
+	svg.select("g.avg").append("line")
+		.attr("x1", 0)
+		.attr("x2", width)
+		.attr("y1", 0)
+		.attr("y2", 0);
+	svg.select("g.avg").append("text")
+		.attr("x", width+5)
+		.attr("y", 0);
+	
+	svg.append("text")
+		.attr("x", width+5)
+		.attr("y", 0)
+		.text("Mean");
 	svg.append("g")
 		.classed("axis x", true)
 		.attr("transform", "translate(0,"+height+")");
@@ -85,6 +102,7 @@
 				.attr("width", xScale.rangeBand());
 		
 		s_bar
+			.classed("fetched", function(d) { return d.fetched; })
 			.classed("failed", function(d) { return d.failed; })
 			.attr("transform", function(d, i) {
 				return "translate(" + xScale(d.name) + "," + yScale(d.age || 0) + ")"
@@ -93,6 +111,18 @@
 			.attr("height", function(d) { return height - yScale(d.age || 0); });
 		
 		s_bar.exit().remove();
+		
+		// Average
+		var avg = d3.mean(actorData, function(v) { return v.age; });
+		var avgLine = svg.select("g.avg");
+		if(avg) {
+			avgLine
+				.style("display", "inline")
+				.attr("transform", "translate(0,"+yScale(avg)+")");
+			avgLine.select("text").text(avg.toFixed(2));
+		} else {
+			avgLine.style("display", "none");
+		}
 	}
 	
 	// Clears the graph, then fetches each actor's age and displays them in the graph.
@@ -139,7 +169,7 @@
 					console.log(actorName, age);
 					
 					// Update actor and graph.
-					actor.fetch = true;
+					actor.fetched = true;
 					if(age)
 						actor.age = age;
 					else
