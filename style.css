@@ -46,3 +46,7 @@ svg {
 .avg line {
 	stroke: lightgrey;
 }
+
+.labels {
+	font-weight: bold;
+}

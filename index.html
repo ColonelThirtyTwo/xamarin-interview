@@ -33,7 +33,7 @@
 	var TOMATOES_API_KEY = "zkj3h538jh6k2kuuhmq7wsy5";
 	
 	// Some SVG settings
-	var margin = {top: 20, right: 80, bottom: 30, left: 40},
+	var margin = {top: 20, right: 80, bottom: 60, left: 60},
 	    width = 800 - margin.left - margin.right,
 	    height = 600 - margin.top - margin.bottom;
 	
@@ -55,16 +55,29 @@
 		.attr("x", width+5)
 		.attr("y", 0);
 	
-	svg.append("text")
-		.attr("x", width+5)
-		.attr("y", 0)
-		.text("Mean")
-		.style("display", "none");
 	svg.append("g")
 		.classed("axis x", true)
 		.attr("transform", "translate(0,"+height+")");
+	
 	svg.append("g")
 		.classed("axis y", true);
+	
+	svg.append("g")
+		.classed("labels", true)
+		.style("display", "none");
+	svg.select("g.labels").append("text")
+		.attr("x", width+5)
+		.attr("y", 0)
+		.text("Mean");
+	svg.select("g.labels").append("text")
+		.attr("transform", "translate(-35,"+(height/2)+") rotate(-90)")
+		.attr("text-anchor", "middle")
+		.text("Age (years)");
+	svg.select("g.labels").append("text")
+		.attr("transform", "translate("+(width/2)+","+(height+40)+")")
+		.attr("text-anchor", "middle")
+		.text("Actor");
+		
 	
 	// Array of currently loaded actor data to be fed to d3
 	var actorData = [];
@@ -129,6 +142,9 @@
 		} else {
 			avgLine.style("display", "none");
 		}
+		
+		// Show labels
+		svg.select("g.labels").style("display", "inline");
 	}
 	
 	// Clears the graph, then fetches each actor's age and displays them in the graph.
