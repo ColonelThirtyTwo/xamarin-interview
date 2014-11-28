@@ -30,6 +30,8 @@
 </div>
 
 <script type="text/javascript">
+"use strict";
+
 (function() {
 	/*var margin = {top: 20, right: 40, bottom: 30, left: 20},
 	    width = 800 - margin.left - margin.right,
@@ -43,16 +45,26 @@
 	// Clears the graph, then fetches each actor's age and displays them in the graph.
 	function reloadGraph(actors) {
 		actors.forEach(function(actor, i) {
-			actor = actor.replace(" ", "_");
 			
-			/* Go through corsproxy to step around cross-site request restrictions */
-			$.get("http://www.corsproxy.com/en.wikipedia.org/wiki/"+actor, function(data) {
-				data = $(data);
+			$.ajax({
+				url: "http://en.wikipedia.org/w/api.php",
+				jsonp: "callback",
+				dataType: "jsonp",
+				data: {
+					format: "json",
+					action: "parse",
+					page: actor,
+					redirects: true,
+				},
 				
-				var match = data.find("table.infobox th:contains('Born') + td .ForceAgeToShow").text()
-					.match(/\(age\s*(\d+)\)/i);
-				console.log(actor, match && parseInt(match[1]));
-			}, "html");
+				success: function(data) {
+					var content = $(data.parse.text["*"]);
+					
+					var match = content.find(".ForceAgeToShow").text()
+						.match(/\(age\s*(\d+)\)/i);
+					console.log(actor, match && parseInt(match[1]));
+				},
+			});
 		});
 	}
 	
