@@ -32,3 +32,14 @@ svg {
 	top: 276px; /* Center over SVG */
 	left: 376px;
 }
+
+.bar {
+	fill: steelblue;
+}
+
+.axis path,
+.axis line {
+	fill: none;
+	stroke: #000;
+	shape-rendering: crispEdges;
+}

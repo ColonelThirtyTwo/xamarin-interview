@@ -34,7 +34,7 @@
 
 (function() {
 	// Some SVG settings
-	var margin = {top: 20, right: 40, bottom: 30, left: 20},
+	var margin = {top: 20, right: 20, bottom: 30, left: 40},
 	    width = 800 - margin.left - margin.right,
 	    height = 600 - margin.top - margin.bottom;
 	
@@ -43,34 +43,54 @@
 		.attr("transform", "translate("+margin.left+","+margin.top+")")
 	;
 	
+	svg.append("g")
+		.classed("axis x", true)
+		.attr("transform", "translate(0,"+height+")");
+	svg.append("g")
+		.classed("axis y", true);
+	
 	// Array of currently loaded actor data to be fed to d3
 	var actorData = [];
 	
 	// Redraws the graph based on the data in actorData
 	function redrawGraph() {
-		var maxAge = d3.max(actorData, function(v) { return v.age; });
-		var barSpacing = width / actorData.length;
-		var barWidth = barSpacing * 0.8;
+		var minAge = d3.min(actorData, function(v) { return v.age; }) || 0;
+		var maxAge = d3.max(actorData, function(v) { return v.age; }) || 0.1;
 		
-		// Y Scale
+		// Scales
+		var xScale = d3.scale.ordinal()
+			.domain(actorData.map(function(d) { return d.name; }))
+			.rangeRoundBands([0, width], 0.2);
 		var yScale = d3.scale.linear()
-			.domain([0, maxAge || 1])
-			.range([0, height]);
+			.domain([minAge - 1, maxAge])
+			.range([height, 0])
+			.clamp(true);
 		
-		// Do join
+		// Axis
+		var xAxis = d3.svg.axis()
+			.scale(xScale)
+			.orient("bottom");
+		svg.select("g.axis.x").call(xAxis);
+		
+		var yAxis = d3.svg.axis()
+			.scale(yScale)
+			.orient("left");
+		svg.select("g.axis.y").call(yAxis);
+		
+		// Bars
 		var s_bar = svg.selectAll("g.bar").data(actorData, function(v) { return v.name; });
 		s_bar.enter().append("g")
 			.classed("bar", true)
 			.append("rect")
-				.attr("width", barWidth);
+				.attr("width", xScale.rangeBand());
 		
 		s_bar
 			.classed("failed", function(d) { return d.failed; })
 			.attr("transform", function(d, i) {
-				return "translate(" + (i*barSpacing) + "," + (height - yScale(d.age)) + ")"
+				return "translate(" + xScale(d.name) + "," + yScale(d.age || 0) + ")"
 			});
 		s_bar.select("rect")
-			.attr("height", function(d) { return yScale(d.age); });
+			.attr("height", function(d) { return height - yScale(d.age || 0); });
 		
 		s_bar.exit().remove();
 	}
@@ -83,7 +103,7 @@
 			// Add actor entry
 			var actor = {
 				name: actorName,
-				age: 0,
+				age: undefined,
 				fetched: false,
 				failed: false,
 			};
