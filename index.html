@@ -323,5 +323,33 @@
 })();	
 </script>
 
+<section>
+	<h3>Instructions</h3>
+	<p>Simply open the select box at the top and select a movie. Without any search terms, the select box will load movies that are currently in theaters, but you can also enter in a name to search for any movie.</p>
+	<p>The app will create a bar graph to visualise each actor's age, and will display the average age as a grey line across the bars (with a label to the right). If the app cannot find the age of an actor (for example, because they don't have a Wikipedia page yet), the app will remove the actor's entry, to avoid cluttering the graph.</p>
+	</p>
+	
+	<h3>Design</h3>
+	<p>There are three main parts to this app:
+		<ol>
+		<li>redrawGraph, which uses <a href="http://d3js.org/">d3</a> to update the bar graph and average.</li>
+		<li>reloadGraph, which fetches each actor's age from Wikipedia (using <a href="http://www.mediawiki.org/wiki/API:Main_page">it's JSONP API</a> to get the page contents and scraping the HTML from there) and calls redrawGraph afterwards.</li>
+		<li>The <a href="http://ivaynberg.github.io/select2/">Select2 widget</a>, which handles user input as well as searching for movies using <a href="http://developer.rottentomatoes.com/">Rotten Tomatoes' JSONP API.</a>, and calls reloadGraph when the user makes a selection.</li>
+		</ol>
+	</p>
+	
+	<h3>Scaleability</h3>
+	<p>The biggest issue with a large number of actors is that the graph becomes unreadable, due to the graph being compressed lengthwise to fit all of the actors. A possible solution is to show the actor's name and exact age in a tooltip when the user hovers over the corresponding bar. The average age is never obscured.</p>
+	<p>Another issue is performance; every actor needs an HTTP request to Wikipedia to get their age. Additionally, the entire text of the actor's Wikipedia page must be downloaded, even though just the age is needed. This can be solved by using a more suitable data source, specifically, one that supports querying multiple people in one request and only provides the needed information. A new data source may also have entries for more actors, as Wikipedia only has entries for "notable" ones. However, the app calculates the average based on the currently loaded actors, so a couple of outstanding requests will not prevent the user from reading an estimate of the average.</p>
+	<p>For running the app for an extended period of time, the most relevant concern is resource usage and leaks. JavaScript's garbage collector does a good job of preventing leaks, but the app still needs to clear references to objects that aren't needed any longer (which it does). In the worst case scenario, the user can just refresh the page, which will free all of its resources.</p>
+	
+	<h3>Other Possible Improvements</h3>
+	<ul>
+		<li>List the actors who have been removed from the graph somewhere.</li>
+		<li>Add a "no actors available" message if there are no actors listed for a movie (instead of an empty graph).</li>
+		<li>Differentiate between an actor who has no age available versus an actor whose age could not be retrieved due to an error.</li>
+	</ul>
+</section>
+
 </body>
 </html>
