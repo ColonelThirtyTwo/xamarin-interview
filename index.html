@@ -30,6 +30,10 @@
 "use strict";
 
 (function() {
+	/////////////////////////////////////////////////////////////////////////////////////////
+	// Setup
+	
+	
 	var TOMATOES_API_KEY = "zkj3h538jh6k2kuuhmq7wsy5";
 	
 	// Some SVG settings
@@ -42,8 +46,8 @@
 		.attr("transform", "translate("+margin.left+","+margin.top+")")
 	;
 	
-	// Set up some elements
-	svg.append("g")
+	// Set up SVG elements
+	svg.append("g") // Average line
 		.classed("avg", true)
 		.style("display", "none");
 	svg.select("g.avg").append("line")
@@ -55,34 +59,38 @@
 		.attr("x", width+5)
 		.attr("y", 0);
 	
-	svg.append("g")
+	svg.append("g") // x axis
 		.classed("axis x", true)
 		.attr("transform", "translate(0,"+height+")");
 	
-	svg.append("g")
+	svg.append("g") // y axis
 		.classed("axis y", true);
 	
-	svg.append("g")
+	svg.append("g") // labels
 		.classed("labels", true)
 		.style("display", "none");
-	svg.select("g.labels").append("text")
+	svg.select("g.labels").append("text") // Mean
 		.attr("x", width+5)
 		.attr("y", 0)
 		.text("Mean");
-	svg.select("g.labels").append("text")
+	svg.select("g.labels").append("text") // y axis label
 		.attr("transform", "translate(-35,"+(height/2)+") rotate(-90)")
 		.attr("text-anchor", "middle")
 		.text("Age (years)");
-	svg.select("g.labels").append("text")
+	svg.select("g.labels").append("text") // x axis label
 		.attr("transform", "translate("+(width/2)+","+(height+40)+")")
 		.attr("text-anchor", "middle")
 		.text("Actor");
 		
 	
-	// Array of currently loaded actor data to be fed to d3
+	// Array of currently loaded actor data.
 	var actorData = [];
 	
-	// Redraws the graph based on the data in actorData
+	/////////////////////////////////////////////////////////////////////////////////////////
+	// redrawGraph
+	//
+	// This is the 'view' portion of the program. It updates the HTML/SVG elements in the page
+	// using d3 based on the data stored in actorData. It also computes the average.
 	function redrawGraph() {
 		var minAge = d3.min(actorData, function(v) { return v.age; }) || 0;
 		var maxAge = d3.max(actorData, function(v) { return v.age; }) || 0.1;
@@ -160,7 +168,11 @@
 		svg.select("g.labels").style("display", "inline");
 	}
 	
-	// Clears the graph, then fetches each actor's age and displays them in the graph.
+	/////////////////////////////////////////////////////////////////////////////////////////
+	// reloadGraph
+	//
+	// Clears the graph and begins loading the data for the passed actors.
+	// actors is an array of string actor names.
 	function reloadGraph(actors) {
 		actorData = [];
 		
@@ -227,22 +239,38 @@
 		redrawGraph();
 	}
 	
-	// Movie Selector
+	/////////////////////////////////////////////////////////////////////////////////////////
+	// Selector
+	//
+	// This uses a Select2 widget to get the movie name from the user. It also queries Rotten
+	// Tomatoes (or potentially some other database) for movies matching the entered name
+	// as well as the actors within them.
 	$("#movie-searcher input").select2({
 		placeholder: "Select a movie",
-		minimumInputLength: 4,
+		minimumInputLength: 0,
 		width: "100%",
 		ajax: {
-			url: "http://api.rottentomatoes.com/api/public/v1.0/movies.json",
+			url: function(term) {
+				// If no search term was entered, get the list of in-theater movies.
+				if(term === "")
+					return "http://api.rottentomatoes.com/api/public/v1.0/lists/movies/in_theaters.json";
+				return "http://api.rottentomatoes.com/api/public/v1.0/movies.json";
+			},
 			dataType: "jsonp",
 			jsonp: "callback",
 			quietMillis: 250,
 			cache: true,
 			data: function(term, page) {
-				return {
+				var data = {
 					apikey: TOMATOES_API_KEY,
-					q: term,
+					page_limit: 16,
+					page: page,
 				};
+				
+				if(term !== "")
+					data.q = term;
+				
+				return data;
 			},
 			results: function(data, page) {
 				data.movies.forEach(function(d) {
@@ -251,15 +279,28 @@
 				
 				return {
 					results: data.movies,
-					more: false,
+					more: "next" in data.links,
 				};
 			},
 		}
 	});
 	
-	$("#movie-searcher input").on("select2-selecting", function(e) {
-		var actors = e.choice.abridged_cast.map(function(d) { return d.name; });
-		reloadGraph(actors);
+	$("#movie-searcher input").on("select2-selecting", function(e) { // Called when user selects a movie
+		// Query for the cast
+		$.ajax({
+			url: "http://api.rottentomatoes.com/api/public/v1.0/movies/"+e.choice.id+"/cast.json",
+			dataType: "jsonp",
+			jsonp: "callback",
+			cache: true,
+			data: {
+				apikey: TOMATOES_API_KEY,
+			},
+			
+			success: function(data) {
+				var actorNames = data.cast.map(function(d) { return d.name; });
+				reloadGraph(actorNames);
+			},
+		});
 	});
 })();	
 </script>
