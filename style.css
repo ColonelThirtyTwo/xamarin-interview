@@ -28,8 +28,11 @@ svg {
 .bar.failed {
 	fill: firebrick;
 }
-.bar text {
+.bar text.age {
 	fill: white;
+}
+.bar text.name {
+	fill: black;
 }
 
 .axis path,
@@ -37,6 +40,10 @@ svg {
 	fill: none;
 	stroke: #000;
 	shape-rendering: crispEdges;
+}
+
+.axis.x text {
+	display: none;
 }
 
 .avg {

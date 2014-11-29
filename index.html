@@ -37,7 +37,7 @@
 	var TOMATOES_API_KEY = "zkj3h538jh6k2kuuhmq7wsy5";
 	
 	// Some SVG settings
-	var margin = {top: 20, right: 80, bottom: 60, left: 60},
+	var margin = {top: 100, right: 80, bottom: 60, left: 60},
 	    width = 800 - margin.left - margin.right,
 	    height = 600 - margin.top - margin.bottom;
 	
@@ -126,28 +126,38 @@
 			.attr("width", xScale.rangeBand())
 			.attr("height", function(d) { return height - yScale(d.age || minAge-3); });
 		s_bar_g.append("text") // Age text
+			.classed("age", true)
 			.attr("x", xScale.rangeBand() / 2.0)
 			.attr("y", 20)
 			.attr("text-anchor", "middle");
+		s_bar_g.append("text") // Name text
+			.classed("name", true)
+			.attr("transform", "translate(" + (xScale.rangeBand() / 2.0) + ", -5) rotate(-90)")
+			.text(function(d) { return d.name; });
 		
 		s_bar // Update classes
 			.classed("fetched", function(d) { return d.fetched; })
 			.classed("failed", function(d) { return d.failed; });
-		s_bar.select("text") // Update text
+		s_bar.select("text.age") // Update age text
+			.attr("x", xScale.rangeBand() / 2.0)
 			.text(function(d) {
 				if(!d.fetched)
 					return "...";
 				if(d.failed)
-					return "No Data";
+					return "X";
 				return d.age;
 			});
+		s_bar.select("text.name")
+			.attr("transform", "translate(" + (xScale.rangeBand() / 2.0) + ", -5) rotate(-90)");
 		
 		s_bar.transition() // Animated properties
 			.duration(750)
+			.ease("cubic-out")
 			.attr("transform", function(d, i) {
 				return "translate(" + xScale(d.name) + "," + yScale(d.age || minAge-3) + ")"
 			})
 			.select("rect")
+			.attr("width", xScale.rangeBand())
 			.attr("height", function(d) { return height - yScale(d.age || minAge-3); });
 		
 		s_bar.exit().remove();
@@ -203,6 +213,10 @@
 					if("error" in data) {
 						actor.fetched = true;
 						actor.failed = true;
+						
+						var index = actorData.indexOf(actor);
+						actorData.splice(index, 1);
+						redrawGraph();
 						return;
 					}
 					
@@ -221,10 +235,14 @@
 					
 					// Update actor and graph.
 					actor.fetched = true;
-					if(age)
+					if(age){
 						actor.age = age;
-					else
+					} else {
 						actor.failed = true;
+						
+						var index = actorData.indexOf(actor);
+						actorData.splice(index, 1);
+					}
 					
 					redrawGraph();
 				},
